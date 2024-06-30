@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Test Portal</title>
+
+    <style>
+      body {
+        display: flex;
+        flex-direction: column;
+        row-gap: 1rem;
+      }
+    </style>
+
+    <script>
+      function submitCreateTesterForm(e) {
+        e.preventDefault();
+        const form = document.querySelector('#create-tester-form');
+        const formData = new FormData(form);
+
+        formData.append('tester', '{{request.query_params.get('tester')}}');
+      
+        fetch('/tester', {
+          method: 'POST',
+          body: formData,
+        }).then(r => r.json())
+          .then(r => {
+            if (r.success) {
+              window.location.href = `/tester/${r.index}`;
+            } else {
+              alert(JSON.stringify(r.errors));
+            }
+          })
+      }
+    </script>
+  </head>
+  <body>
+    <form method="GET">
+      <select
+        name="tester"
+        onchange="this.form.submit()"
+      >
+        <option value="">Select a tester</option>
+        {% for tester in testers %}
+          <option 
+          value="{{tester}}" 
+          {% if tester == request.query_params.get('tester') %}
+            selected
+          {% endif %}
+          >{{tester}}</option>
+        {% endfor %}
+      </select>
+    </form>
+
+    {% if request.query_params.get('tester') %}
+    <form onsubmit="submitCreateTesterForm(event)" id="create-tester-form">
+      {% for config_type in config_types %}
+        <input
+          type="text"
+          name="{{config_type.name}}"
+          placeholder="{{config_type.name}} ({{config_type.type}})"
+        />
+      {% endfor %}
+
+      <button type="submit">Create</button>
+    </form>
+    {% endif %}
+  </body>
+</html>
